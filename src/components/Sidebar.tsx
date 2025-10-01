@@ -16,10 +16,10 @@ import {
   LogIn,
   LogOut as LogOutIcon,
   User,
-  Moon,
-  Sun,
   CheckCircle,
-  MapPin
+  MapPin,
+  UserCheck,
+  BarChart3
 } from 'lucide-react'
 import { useTheme } from '@/hooks/useTheme'
 
@@ -33,12 +33,21 @@ interface NavItem {
 const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/employee/dashboard', icon: LayoutDashboard },
   { name: 'Daily Planner', href: '/planner', icon: Calendar },
-  { name: 'Tasks', href: '/tasks', icon: CheckSquare, roles: ['admin', 'manager'] },
+
+  // Admin only
+  { name: 'Tasks', href: '/tasks', icon: CheckSquare, roles: ['admin'] },
+  { name: 'Projects', href: '/projects', icon: FolderOpen, roles: ['admin'] },
+  { name: 'All Users', href: '/admin/users', icon: Users, roles: ['admin'] },
+  { name: 'All Attendance', href: '/admin/attendance', icon: Clock, roles: ['admin'] },
+
+  // Manager only
+  { name: 'My Team', href: '/manager/team', icon: Users, roles: ['manager'] },
+  { name: 'Team Attendance', href: '/manager/attendance', icon: UserCheck, roles: ['manager'] },
+  { name: 'Team Reports', href: '/manager/reports', icon: BarChart3, roles: ['manager'] },
+
+  // Employee only
   { name: 'My Tasks', href: '/employee/tasks', icon: CheckSquare, roles: ['employee'] },
-  { name: 'Projects', href: '/projects', icon: FolderOpen, roles: ['admin', 'manager'] },
   { name: 'My Projects', href: '/employee/projects', icon: FolderOpen, roles: ['employee'] },
-  { name: 'Team', href: '/admin/users', icon: Users, roles: ['admin'] },
-  { name: 'Attendance', href: '/admin/attendance', icon: Clock, roles: ['admin'] },
 ]
 
 const quickActions = [
@@ -121,7 +130,7 @@ export default function Sidebar() {
           location: { lat: latitude, lng: longitude },
           pending: user.role === 'employee' // Employees need approval
         })
-        alert('Check-in successful! Awaiting manager approval.')
+        alert('Check-in successful!' + (user.role === 'employee' ? ' Awaiting manager approval.' : ''))
       } else {
         throw new Error('Check-in failed')
       }
@@ -149,7 +158,7 @@ export default function Sidebar() {
           checkedIn: false,
           pending: user.role === 'employee'
         })
-        alert('Check-out successful! Awaiting manager approval.')
+        alert('Check-out successful!' + (user.role === 'employee' ? ' Awaiting manager approval.' : ''))
       }
     } catch (error) {
       alert('Check-out failed. Please try again.')
@@ -164,7 +173,7 @@ export default function Sidebar() {
         <div className="flex items-center justify-between px-4 py-6">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-zinc-900 dark:bg-white rounded-lg flex items-center justify-center flex-shrink-0">
-              <img src='/dark.png' className='h-5 dark:' alt="Backtick" />
+              <img src='/dark.png' className='h-5' alt="Backtick" />
             </div>
             {!isCollapsed && (
               <div>
@@ -173,7 +182,6 @@ export default function Sidebar() {
             )}
           </div>
           <div className="flex items-center gap-2">
-
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
@@ -206,8 +214,8 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* Attendance Quick Actions */}
-        {!isCollapsed && (
+        {/* Attendance Quick Actions - Only for employees */}
+        {!isCollapsed && user.role === 'employee' && (
           <div className="px-4 py-4 border-t border-zinc-200 dark:border-zinc-800">
             <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3">
               Attendance
@@ -271,12 +279,14 @@ export default function Sidebar() {
               </div>
             </div>
           )}
+
           <button
             onClick={clear}
-            className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'space-x-3 px-3'} py-2.5 w-full text-left rounded-lg text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-200`}
-          >
+            className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'space-x-3 px-3'} py-2.5 w-full text-left rounded-lg text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-200`} >
             <LogOutIcon size={18} />
-            {!isCollapsed && <span>Sign out</span>}
+            {!isCollapsed &&
+              <span>Sign out</span>
+            }
           </button>
         </div>
       </div>

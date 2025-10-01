@@ -10,7 +10,9 @@ export async function GET(req: NextRequest) {
   const u = getUserFromAuth(req)
   if (!u || !can(u.role, ['admin', 'manager'])) return forbidden()
 
-  const users = await User.find({}, { passwordHash: 0 }).sort({ createdAt: -1 })
+  const users = await User.find({}, { passwordHash: 0 })
+    .populate('managerId', 'name email')
+    .sort({ createdAt: -1 })
   return NextResponse.json(users)
 }
 
@@ -19,20 +21,23 @@ export async function POST(req: NextRequest) {
   const u = getUserFromAuth(req)
   if (!u || !can(u.role, ['admin'])) return forbidden()
 
-  const { name, email, password, role } = await req.json()
+  const { name, email, password, role, managerId } = await req.json()
 
   if (await User.findOne({ email })) {
     return NextResponse.json({ error: 'User already exists' }, { status: 409 })
   }
 
   const passwordHash = await bcrypt.hash(password, 12)
-  const user = await User.create({ name, email, passwordHash, role })
+  const userData: any = { name, email, passwordHash, role }
 
-  return NextResponse.json({
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    createdAt: user.createdAt
-  })
+  if (managerId && role === 'employee') {
+    userData.managerId = managerId
+  }
+
+  const user = await User.create(userData)
+  const populatedUser = await User.findById(user._id)
+    .populate('managerId', 'name email')
+    .select('-passwordHash')
+
+  return NextResponse.json(populatedUser)
 }
